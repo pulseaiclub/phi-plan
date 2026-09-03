@@ -1,0 +1,125 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            goos: linux
+            goarch: amd64
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            goos: linux
+            goarch: arm64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            goos: darwin
+            goarch: amd64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            goos: darwin
+            goarch: arm64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            goos: windows
+            goarch: amd64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+          components: rustfmt
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package archive
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ github.ref_name }}"
+          VERSION_CLEAN="${VERSION#v}"
+
+          BINARY="target/${{ matrix.target }}/release/phi-plan"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BINARY="${BINARY}.exe"
+          fi
+
+          PKG_DIR="$(mktemp -d)"
+          cp "$BINARY" "$PKG_DIR/phi-plan"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            mv "$PKG_DIR/phi-plan" "$PKG_DIR/phi-plan.exe"
+          fi
+          cp phi.yaml "$PKG_DIR/phi.yaml"
+
+          ARCHIVE_NAME="phi-plan_${VERSION_CLEAN}_${{ matrix.goos }}_${{ matrix.goarch }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            ARCHIVE_NAME="${ARCHIVE_NAME}.zip"
+            (cd "$PKG_DIR" && zip -r "../../$ARCHIVE_NAME" .)
+          else
+            ARCHIVE_NAME="${ARCHIVE_NAME}.tar.gz"
+            tar czf "../../$ARCHIVE_NAME" -C "$PKG_DIR" .
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.goos }}-${{ matrix.goarch }}
+          path: phi-plan_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f
+
+      - name: Generate checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ github.ref_name }}"
+          VERSION_CLEAN="${VERSION#v}"
+          cd artifacts
+          find . -type f -name 'phi-plan_*' | sort | while read f; do
+            name=$(basename "$f")
+            hash=$(sha256sum "$f" | awk '{print $1}')
+            echo "${hash}  ${name}"
+          done > "../checksums_${VERSION_CLEAN}.txt"
+          cat "../checksums_${VERSION_CLEAN}.txt"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            checksums_${{ github.ref_name }}.txt
+            artifacts/**/*
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
