@@ -89,12 +89,13 @@ fn main() -> Result<(), phi::Error> {
                                     ctx.notify("info", plan::OFF_BLURB);
                                 }
                             }
-                            _ => return Err("usage: /plan [on|off|status] (bare = status)".into()),
+                            _ => return Err("usage: /plan on|off|status".into()),
                         }
                     }
                     Ok(())
                 },
-            ),
+            )
+            .needs_args(),
         );
     }
 

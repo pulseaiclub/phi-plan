@@ -8,7 +8,8 @@ used to parse the `update_plan` tool-argument payload.
 
 ## What you get
 
-- **`/plan [on|off|status]`** (bare `/plan` = status)
+- **`/plan on|off|status`** — type an argument; bare `/plan` (or picker accept)
+  leaves `/plan ` in the composer so you can finish `on` / `off` / `status`
   - `on` — switches the current session into **read-only plan mode**. The model
     is told every turn to plan, not implement; any tool call outside the
     plan-mode allowlist is **denied before the host's permission gate** with

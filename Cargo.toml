@@ -11,7 +11,7 @@ name = "phi-plan"
 path = "src/main.rs"
 
 [dependencies]
-phi-ext = "0.2.0"
+phi-ext = "0.3.0"
 serde_json = "1"
 # Local SDK (offline): the phi repo sits at ../phi
 # phi-ext = { path = "../phi/ext/rust" }
