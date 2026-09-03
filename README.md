@@ -65,15 +65,15 @@ everywhere, project-local `.phi/extensions/phi-plan` pins it to one project.
 Download the archive for your platform from
 [GitHub Releases](https://github.com/pulseaiclub/phi-plan/releases). Naming is
 `phi-plan_<version>_<os>_<arch>.tar.gz` (Linux/macOS) or `.zip` (Windows),
-where `<version>` is the tag without the `v` (a `v0.1.0` tag yields
-`phi-plan_0.1.0_linux_amd64.tar.gz`, etc.). Each archive already contains
+where `<version>` is the tag without the `v` (a `v0.2.0` tag yields
+`phi-plan_0.2.0_linux_amd64.tar.gz`, etc.). Each archive already contains
 `phi-plan` (`phi-plan.exe` on Windows) and `phi.yaml`.
 
 Global install, Linux/macOS:
 
 ```bash
 mkdir -p ~/.phi/extensions/phi-plan
-tar xzf phi-plan_0.1.0_linux_amd64.tar.gz -C ~/.phi/extensions/phi-plan
+tar xzf phi-plan_0.2.0_linux_amd64.tar.gz -C ~/.phi/extensions/phi-plan
 ```
 
 Windows (PowerShell) or a project-local install: same idea — extract

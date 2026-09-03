@@ -22,7 +22,7 @@ checksum = "1289c38065992b1411a71126ff853216ace7ed6cab17bfd501a511ae9d554c9e"
 
 [[package]]
 name = "phi-plan"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "phi-ext",
  "serde_json",
