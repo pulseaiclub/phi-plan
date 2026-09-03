@@ -3,7 +3,8 @@
 A **plan mode** extension for [Phi](https://github.com/pulseaiclub/phi): a
 read-only session mode (`/plan`) plus the model-driven `update_plan` tool.
 Written in Rust against the [`phi-ext`](../phi/ext/rust) SDK; speaks the PXB
-wire protocol over stdin/stdout — zero runtime deps.
+wire protocol over stdin/stdout. Its only extra dependency is `serde_json`,
+used to parse the `update_plan` tool-argument payload.
 
 ## What you get
 
@@ -41,10 +42,9 @@ dispatch-time denial.
 | Path | Role |
 |------|------|
 | `src/main.rs` | Extension wiring: `/plan` command, tool gate, prompt steering, lifecycle bookkeeping |
-| `src/plan.rs` | Domain logic: allowlist, status coercion, single-in-progress rule, rendering |
-| `src/json.rs` | Tiny zero-dep JSON parser for `update_plan` args |
+| `src/plan.rs` | Domain logic: allowlist, status coercion, single-in-progress rule, rendering (tool-arg JSON via `serde_json`) |
 | `phi.yaml` | Manifest installed next to the binary |
-| `Cargo.toml` | Crate; depends on the local `phi-ext` SDK at `../phi/ext/rust` |
+| `Cargo.toml` | Crate; depends on `phi-ext` (SDK) and `serde_json` |
 
 ## Build & test
 

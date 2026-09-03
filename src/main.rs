@@ -16,7 +16,6 @@
 //! Session semantics: plan mode applies to the session it was enabled in and
 //! resets to off when you start or resume another session.
 
-mod json;
 mod plan;
 
 use phi_ext::{phi, pxb};

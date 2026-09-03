@@ -8,7 +8,7 @@
 //!   to run; every other tool call is denied before the host's permission
 //!   gate.
 
-use crate::json;
+use serde_json::Value;
 
 // ── Plan-mode policy ────────────────────────────────────────────────────────
 
@@ -132,7 +132,7 @@ the nearest of pending/in_progress/completed/failed, and at most one item stays 
 /// Parses and normalizes `update_plan` args: `{"plan":[{"content":…,"status":…,"notes":…},…]}`.
 /// Unknown fields (e.g. `id`) are ignored.
 pub fn parse_items(args: &[u8]) -> Result<Vec<PlanItem>, String> {
-    let root = json::parse(args).map_err(|e| format!("invalid JSON: {e}"))?;
+    let root: Value = serde_json::from_slice(args).map_err(|e| format!("invalid JSON: {e}"))?;
     let raw_items = root
         .get("plan")
         .and_then(|p| p.as_array())
@@ -141,7 +141,7 @@ pub fn parse_items(args: &[u8]) -> Result<Vec<PlanItem>, String> {
     let mut items = Vec::with_capacity(raw_items.len());
     for (index, raw) in raw_items.iter().enumerate() {
         let obj = match raw {
-            json::Value::Obj(_) => raw,
+            Value::Object(_) => raw,
             _ => return Err(format!("plan item {} must be an object", index + 1)),
         };
         let content = match obj.get("content").and_then(|c| c.as_str()) {
@@ -215,7 +215,7 @@ fn enforce_single_in_progress(mut plan: Vec<PlanItem>) -> Vec<PlanItem> {
 
 /// One-line TUI row for a pending `update_plan` call.
 pub fn detail_from_args(args: &[u8]) -> String {
-    match json::parse(args)
+    match serde_json::from_slice::<Value>(args)
         .ok()
         .and_then(|v| v.get("plan").and_then(|p| p.as_array()).map(|a| a.len()))
     {
@@ -287,6 +287,14 @@ mod tests {
             parse_items(br#"{"plan":[{"id":"abc","content":"Step","extra":123}]}"#).unwrap();
         assert_eq!(items[0].content, "Step");
         assert_eq!(items[0].status, PENDING);
+    }
+
+    #[test]
+    fn parses_escaped_content_and_unicode() {
+        let args = r#"{"plan":[{"content":"step \"one\" \u00e9 😀","status":"in progress"}]}"#;
+        let items = parse_items(args.as_bytes()).unwrap();
+        assert_eq!(items[0].content, "step \"one\" é 😀");
+        assert_eq!(items[0].status, IN_PROGRESS);
     }
 
     #[test]
