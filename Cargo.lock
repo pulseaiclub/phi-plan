@@ -10,7 +10,7 @@ checksum = "bd02ee61c1657fc3bfde4f47b007aace0c5ce0f9016e4cff6588c9b85a0405d4"
 
 [[package]]
 name = "phi-plan"
-version = "0.2.0"
+version = "0.1.0"
 dependencies = [
  "phi-ext",
 ]

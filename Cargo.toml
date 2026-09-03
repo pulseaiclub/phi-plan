@@ -1,6 +1,6 @@
 [package]
 name = "phi-plan"
-version = "0.2.0"
+version = "0.1.0"
 edition = "2021"
 rust-version = "1.75"
 description = "A Phi plan-mode extension (Rust/PXB): read-only plan mode and a model-driven update_plan tool"

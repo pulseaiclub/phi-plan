@@ -1,5 +1,5 @@
 name: phi-plan
-version: "0.2.0"
+version: "0.1.0"
 exec: ./phi-plan
 description: "Read-only plan mode (/plan on|off|status) + update_plan tool"
 enabled: true
