@@ -99,7 +99,12 @@ impl Host {
             args: args.into(),
         });
         self.next_id += 1;
-        self.write(pxb::TYPE_COMMAND_INVOKED, pxb::FLAG_HAS_ID, self.next_id, &body);
+        self.write(
+            pxb::TYPE_COMMAND_INVOKED,
+            pxb::FLAG_HAS_ID,
+            self.next_id,
+            &body,
+        );
         let mut notifies = Vec::new();
         loop {
             let f = self.read();
@@ -229,18 +234,27 @@ fn plan_mode_toggle_gate_and_tool() {
 
     // Outside plan mode every tool call passes the gate untouched.
     let resp = h.intercept_tool("write");
-    assert!(!resp.block && resp.reason.is_empty(), "off-mode must not block");
+    assert!(
+        !resp.block && resp.reason.is_empty(),
+        "off-mode must not block"
+    );
 
     // /plan on while an agent turn is running → refused.
     h.send_event(pxb::Event::AgentStart, "", "s1");
     let (ok, err, _) = h.command("on");
-    assert!(!ok && err.contains("turn is active"), "got ok={ok} err={err}");
+    assert!(
+        !ok && err.contains("turn is active"),
+        "got ok={ok} err={err}"
+    );
     h.send_event(pxb::Event::AgentEnd, "", "s1");
 
     // /plan on → ok.
     let (ok, err, notes) = h.command("on");
     assert!(ok, "on should succeed: {err}");
-    assert!(notify_text(&notes).contains("plan mode ON"), "got: {notes:?}");
+    assert!(
+        notify_text(&notes).contains("plan mode ON"),
+        "got: {notes:?}"
+    );
 
     // In plan mode: mutators blocked with reason, readers pass.
     let resp = h.intercept_tool("bash");

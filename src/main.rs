@@ -69,7 +69,7 @@ fn main() -> Result<(), phi::Error> {
                                     ctx.notify("info", "plan mode is already on (read-only).");
                                 } else if st.turn_active {
                                     return Err(
-                                        "cannot change plan mode while a turn is active".into(),
+                                        "cannot change plan mode while a turn is active".into()
                                     );
                                 } else {
                                     st.mode_on = true;
@@ -82,7 +82,7 @@ fn main() -> Result<(), phi::Error> {
                                     ctx.notify("info", "plan mode is already off.");
                                 } else if st.turn_active {
                                     return Err(
-                                        "cannot change plan mode while a turn is active".into(),
+                                        "cannot change plan mode while a turn is active".into()
                                     );
                                 } else {
                                     st.mode_on = false;
@@ -90,11 +90,7 @@ fn main() -> Result<(), phi::Error> {
                                     ctx.notify("info", plan::OFF_BLURB);
                                 }
                             }
-                            _ => {
-                                return Err(
-                                    "usage: /plan [on|off|status] (bare = status)".into()
-                                )
-                            }
+                            _ => return Err("usage: /plan [on|off|status] (bare = status)".into()),
                         }
                     }
                     Ok(())
@@ -106,38 +102,34 @@ fn main() -> Result<(), phi::Error> {
     // ── update_plan tool (model-driven plan artifact) ─────────────────────────
     {
         let state = state.clone();
-        let schema = phi::Schema::object().property(
-            "plan",
-            phi::Schema::array(
-                phi::Schema::object()
-                    .property(
-                        "content",
-                        phi::Schema::string().description("The plan step description."),
-                    )
-                    .property(
-                        "status",
-                        phi::Schema::string()
-                            .description("Status of this step.")
-                            .enum_values([
-                                "pending",
-                                "in_progress",
-                                "completed",
-                                "failed",
-                            ]),
-                    )
-                    .property(
-                        "notes",
-                        phi::Schema::string().description("Optional notes for this step."),
-                    )
-                    .required(["content"]),
+        let schema = phi::Schema::object()
+            .property(
+                "plan",
+                phi::Schema::array(
+                    phi::Schema::object()
+                        .property(
+                            "content",
+                            phi::Schema::string().description("The plan step description."),
+                        )
+                        .property(
+                            "status",
+                            phi::Schema::string()
+                                .description("Status of this step.")
+                                .enum_values(["pending", "in_progress", "completed", "failed"]),
+                        )
+                        .property(
+                            "notes",
+                            phi::Schema::string().description("Optional notes for this step."),
+                        )
+                        .required(["content"]),
+                )
+                .description("Ordered list of plan items, replacing any previous plan."),
             )
-            .description("Ordered list of plan items, replacing any previous plan."),
-        )
-        .required(["plan"]);
+            .required(["plan"]);
 
         let execute = move |args: &[u8]| {
-            let items =
-                plan::parse_items(args).map_err(|e| format!("Error: invalid arguments for update_plan: {e}"))?;
+            let items = plan::parse_items(args)
+                .map_err(|e| format!("Error: invalid arguments for update_plan: {e}"))?;
             let mut st = state.borrow_mut();
             st.plan.items = items;
             let content = st.plan.render();

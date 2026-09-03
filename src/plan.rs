@@ -111,7 +111,10 @@ impl Plan {
             .iter()
             .filter(|i| i.status == PENDING || i.status == IN_PROGRESS)
             .count();
-        format!("{n} step{s} ({open} open)", s = if n == 1 { "" } else { "s" })
+        format!(
+            "{n} step{s} ({open} open)",
+            s = if n == 1 { "" } else { "s" }
+        )
     }
 }
 
@@ -227,13 +230,36 @@ mod tests {
 
     #[test]
     fn statuses_coerce() {
-        for s in ["completed", "Complete", "done", "finished", "resolved", "✓", "[x]", "x"] {
+        for s in [
+            "completed",
+            "Complete",
+            "done",
+            "finished",
+            "resolved",
+            "✓",
+            "[x]",
+            "x",
+        ] {
             assert_eq!(normalize_status(s), COMPLETED, "input: {s}");
         }
-        for s in ["in_progress", "in-progress", "in progress", "active", "wip", "ongoing"] {
+        for s in [
+            "in_progress",
+            "in-progress",
+            "in progress",
+            "active",
+            "wip",
+            "ongoing",
+        ] {
             assert_eq!(normalize_status(s), IN_PROGRESS, "input: {s}");
         }
-        for s in ["failed", "fail", "blocked", "cancelled", "abandoned", "skipped"] {
+        for s in [
+            "failed",
+            "fail",
+            "blocked",
+            "cancelled",
+            "abandoned",
+            "skipped",
+        ] {
             assert_eq!(normalize_status(s), FAILED, "input: {s}");
         }
         for s in ["pending", "todo", "not_started", "", "nope"] {
@@ -288,11 +314,12 @@ mod tests {
 
     #[test]
     fn renders_canonical_format() {
-        let mut plan = Plan::default();
-        plan.items = parse_items(
-            br#"{"plan":[{"content":"Investigate","status":"in_progress"},{"content":"Fix","notes":"two files"}]}"#,
-        )
-        .unwrap();
+        let plan = Plan {
+            items: parse_items(
+                br#"{"plan":[{"content":"Investigate","status":"in_progress"},{"content":"Fix","notes":"two files"}]}"#,
+            )
+            .unwrap(),
+        };
         let text = plan.render();
         assert_eq!(
             text,
@@ -305,7 +332,14 @@ mod tests {
     fn allowlist_policy_is_sane() {
         assert!(READ_ONLY_TOOLS.contains(&"update_plan"));
         assert!(READ_ONLY_TOOLS.contains(&"read"));
-        for mutator in ["write", "edit", "bash", "agent_spawn", "agent_cancel", "mcp_call"] {
+        for mutator in [
+            "write",
+            "edit",
+            "bash",
+            "agent_spawn",
+            "agent_cancel",
+            "mcp_call",
+        ] {
             assert!(
                 !READ_ONLY_TOOLS.contains(&mutator),
                 "mutator leaked into allowlist: {mutator}"

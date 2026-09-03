@@ -87,7 +87,12 @@ impl<'a> Parser<'a> {
     fn expect(&mut self, want: u8) -> Result<(), String> {
         match self.bump() {
             Some(c) if c == want => Ok(()),
-            Some(c) => Err(format!("expected `{}`, found `{}` at byte {}", want as char, c as char, self.i - 1)),
+            Some(c) => Err(format!(
+                "expected `{}`, found `{}` at byte {}",
+                want as char,
+                c as char,
+                self.i - 1
+            )),
             None => Err(format!("expected `{}`, found end of input", want as char)),
         }
     }
@@ -119,7 +124,10 @@ impl<'a> Parser<'a> {
                 Ok(Value::Null)
             }
             Some(b'-' | b'0'..=b'9') => self.number(),
-            Some(c) => Err(format!("unexpected character `{}` at byte {}", c as char, self.i)),
+            Some(c) => Err(format!(
+                "unexpected character `{}` at byte {}",
+                c as char, self.i
+            )),
         }
     }
 
