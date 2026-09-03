@@ -1,0 +1,20 @@
+[package]
+name = "phi-plan"
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.75"
+description = "A Phi plan-mode extension (Rust/PXB): read-only plan mode and a model-driven update_plan tool"
+license = "MIT"
+
+[[bin]]
+name = "phi-plan"
+path = "src/main.rs"
+
+[dependencies]
+phi-ext = "0.2.0"
+# Local SDK (offline): the phi repo sits at ../phi
+# phi-ext = { path = "../phi/ext/rust" }
+
+[profile.release]
+lto = true
+strip = true
