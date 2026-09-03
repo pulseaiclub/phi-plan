@@ -53,24 +53,46 @@ cargo test      # unit tests (normalization, parsing, rendering, allowlist)
 cargo build --release
 ```
 
-## Install (global)
+## Install
+
+The extension is a self-contained binary plus the `phi.yaml` manifest, dropped
+into an extension directory: global `~/.phi/extensions/phi-plan` applies
+everywhere, project-local `.phi/extensions/phi-plan` pins it to one project.
+
+### From a release (recommended)
+
+Download the archive for your platform from
+[GitHub Releases](https://github.com/pulseaiclub/phi-plan/releases). Naming is
+`phi-plan_<version>_<os>_<arch>.tar.gz` (Linux/macOS) or `.zip` (Windows),
+where `<version>` is the tag without the `v` (a `v0.1.0` tag yields
+`phi-plan_0.1.0_linux_amd64.tar.gz`, etc.). Each archive already contains
+`phi-plan` (`phi-plan.exe` on Windows) and `phi.yaml`.
+
+Global install, Linux/macOS:
 
 ```bash
+mkdir -p ~/.phi/extensions/phi-plan
+tar xzf phi-plan_0.1.0_linux_amd64.tar.gz -C ~/.phi/extensions/phi-plan
+```
+
+Windows (PowerShell) or a project-local install: same idea — extract
+`phi-plan.exe` + `phi.yaml` (or `phi-plan` + `phi.yaml`) into
+`~/.phi/extensions/phi-plan` / `.phi/extensions/phi-plan`.
+
+### From source
+
+Requires a stable Rust toolchain; the first build fetches `phi-ext` and
+`serde_json` from crates.io, so it needs network access.
+
+```bash
+cargo build --release
 mkdir -p ~/.phi/extensions/phi-plan
 cp target/release/phi-plan phi.yaml ~/.phi/extensions/phi-plan/
 ```
 
-Reload in the TUI: **Ctrl+K → extensions → reload**, then try
-`/plan on`, ask the agent to plan something, review, `/plan off`.
-
-## Install (project-local)
-
-```bash
-mkdir -p .phi/extensions/phi-plan
-cp target/release/phi-plan phi.yaml .phi/extensions/phi-plan/
-```
-
-Disable all extensions with `PHI_EXTENSIONS=off`.
+Then reload extensions in the TUI (**Ctrl+K → extensions → reload**) and try
+`/plan on`, ask the agent to plan something, review, `/plan off`. Disable all
+extensions with `PHI_EXTENSIONS=off`.
 
 ## Session semantics
 
