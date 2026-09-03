@@ -44,54 +44,61 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-          components: rustfmt
+
+      - name: Install cross linker (linux/arm64)
+        if: matrix.goos == 'linux' && matrix.goarch == 'arm64'
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
 
       - name: Build release binary
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Package archive
+        id: package
         shell: bash
         run: |
           set -euo pipefail
 
           VERSION="${{ github.ref_name }}"
           VERSION_CLEAN="${VERSION#v}"
+          GOOS="${{ matrix.goos }}"
+          GOARCH="${{ matrix.goarch }}"
 
-          BINARY="target/${{ matrix.target }}/release/phi-plan"
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            BINARY="${BINARY}.exe"
+          SRC="target/${{ matrix.target }}/release/phi-plan"
+          if [ "$GOOS" = "windows" ]; then
+            SRC="${SRC}.exe"
           fi
 
-          PKG_DIR="$(mktemp -d)"
-          cp "$BINARY" "$PKG_DIR/phi-plan"
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            mv "$PKG_DIR/phi-plan" "$PKG_DIR/phi-plan.exe"
-          fi
-          cp phi.yaml "$PKG_DIR/phi.yaml"
-
-          ARCHIVE_NAME="phi-plan_${VERSION_CLEAN}_${{ matrix.goos }}_${{ matrix.goarch }}"
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            ARCHIVE_NAME="${ARCHIVE_NAME}.zip"
-            (cd "$PKG_DIR" && zip -r "../../$ARCHIVE_NAME" .)
+          STAGE=".stage/${GOOS}-${GOARCH}"
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE"
+          if [ "$GOOS" = "windows" ]; then
+            cp "$SRC" "$STAGE/phi-plan.exe"
           else
-            ARCHIVE_NAME="${ARCHIVE_NAME}.tar.gz"
-            tar czf "../../$ARCHIVE_NAME" -C "$PKG_DIR" .
+            cp "$SRC" "$STAGE/phi-plan"
           fi
+          cp phi.yaml "$STAGE/phi.yaml"
+
+          BASE="phi-plan_${VERSION_CLEAN}_${GOOS}_${GOARCH}"
+          if [ "$GOOS" = "windows" ]; then
+            # Windows runners have no `zip` in Git Bash; use PowerShell instead.
+            powershell -NoProfile -Command "Compress-Archive -Path '$STAGE/*' -DestinationPath '$BASE.zip' -Force"
+          else
+            tar czf "$BASE.tar.gz" -C "$STAGE" .
+          fi
+          echo "archive=${BASE}.*" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.goos }}-${{ matrix.goarch }}
-          path: phi-plan_${{ github.ref_name }}_${{ matrix.goos }}_${{ matrix.goarch }}.*
+          path: ${{ steps.package.outputs.archive }}
 
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -111,15 +118,13 @@ jobs:
             name=$(basename "$f")
             hash=$(sha256sum "$f" | awk '{print $1}')
             echo "${hash}  ${name}"
-          done > "../checksums_${VERSION_CLEAN}.txt"
-          cat "../checksums_${VERSION_CLEAN}.txt"
+          done > "checksums_${VERSION_CLEAN}.txt"
+          cat "checksums_${VERSION_CLEAN}.txt"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            checksums_${{ github.ref_name }}.txt
-            artifacts/**/*
+          files: artifacts/**/*
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
